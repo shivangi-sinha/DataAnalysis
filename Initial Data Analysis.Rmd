@@ -1,0 +1,311 @@
+---
+title: "Homework3"
+author: "Shivangi Sinha"
+date: "1/26/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+# PART 2 QUESTION 1
+
+```{r,include = FALSE}
+library(faraway)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+```
+## Abstract
+
+
+>The uswages data frame has 2000 rows and 10 columns. Weekly Wages for US male workers sampled from the Current Population Survey in 1988.
+
+## Variables 
+**The variable are as follows**
+
+* Real weekly wages in dollars (deflated by personal consumption expenditures - 1992 base year)
+
+*Years of education
+
+*Years of experience
+
+*Race 
+
+*1 if living in Standard Metropolitan Statistical Area, 0 if not
+
+*1 if living in the North East
+
+*1 if living in the Midwest
+
+*1 if living in the West
+
+*1 if living in the South
+
+*1 if working part time, 0 if not
+
+
+```{r,include = FALSE}
+df <- data.frame(uswages)
+```
+
+
+```{r,eval =  FALSE,include = FALSE}
+
+str(df)
+?uswages
+```
+
+```{r,fig.width = 2, fig.height = 3,include = FALSE}
+df$race = factor(df$race)
+levels(df$race) <- c("White","Black")
+
+df$smsa = factor(df$smsa)
+levels(df$smsa) <- c("Not Standard Metropolitan Area","Standard Metropolitan Area")
+df$ne = factor(df$ne)
+levels(df$ne) <- c("Not Northeast","Northeast")
+df$mw = factor(df$mw)
+levels(df$mw) <- c("Not Midwest","Midwest")
+df$we = factor(df$we)
+levels(df$we) <- c("Not West","West")
+df$so = factor(df$so)
+levels(df$so) <- c("Not South","South")
+df$pt = factor(df$pt)
+levels(df$pt) <- c("Not Working Part Time"," working part time")
+
+```
+
+```{r,echo = FALSE}
+#install.packages("cowplot")
+library(cowplot)
+library(gridExtra)
+```
+# Descriptive Statistics 
+
+```{r, result = FALSE,fig.width = 1, fig.height = 2,echo = FALSE}
+df %>% select_if(is.numeric) %>% summary()
+```
+
+We can see that the exper has min as -2 which is not possible. It clearly has outliers. 
+Wage also has the max at 7716 when the mean is around 608. We should look at the plot to get more details.
+
+# Graphical Summaries 
+
+```{r,fig.width = 6, fig.height = 2,echo = FALSE}
+df %>% select_if(is.numeric) %>% gather() %>%
+ggplot(aes(value)) +
+geom_histogram() +
+facet_wrap(~ key, scale = "free") 
+```
+
+We can see that exper is skewed to the left and education is skewed to the right. 
+
+This is reinforces our notion that more number of years of eductions results in more wage. We can spot the outliers in this graph as well.
+
+We can see how more number of experience doesn't neccesarily lead to high wages.
+
+
+
+
+```{r,fig.width = 7, fig.height = 3,echo = FALSE}
+f <- df %>%
+ggplot(aes(race, wage)) +
+geom_boxplot()
+f <- f+labs(title = "Relationship b/w race & wage")
+
+g <- df %>%
+ggplot(aes(smsa, wage)) +
+geom_boxplot()
+g <- g+labs(title = "Relationship b/w living area & wage")
+plot_grid(f,g)
+
+```
+
+According to this the  people with white race only had a slight in their wage when compared with people with black race.
+Again, people who lives in Statistical Metropolitan Area has only a slight increase in the wage . We can see it has more outliers present in the data.
+
+# Studying Relationships between three variables.
+
+```{r,fig.width = 7, fig.height = 2,echo = FALSE}
+df2 <- subset(df,race == "White")
+w <- ggplot(data = df2, mapping = aes(x = educ, y = wage)) +
+geom_point(color = "orange") +geom_smooth() +scale_fill_discrete(name="Experimental\nCondition")
+w <- w+labs(title = "White Race vs Wage")
+df3 <- subset(df,race == "Black")
+ b <- ggplot(data = df3, mapping = aes(x = educ, y = wage)) +
+geom_point(color = "blue") + geom_smooth()
+ b <- b+labs(title = "Black Race vs Wage")
+ plot_grid(w,b)
+```
+
+# Pairwise Relationships
+
+
+
+
+
+```{r,fig.width = 8, fig.height = 2,echo = FALSE}
+c <- ggplot(data = df) +
+geom_point(mapping = aes(x = educ, y = wage),color = "blue")
+
+d <- ggplot(data = df) +
+geom_point(mapping = aes(x = exper, y = wage),color = "blue")  
+ 
+plot_grid(c,d, labels = "Relationship of experience and education with wages")
+
+
+```
+
+
+
+We can infer from the graphs that people with white race earn significantly more than people with black race with same number of education.
+
+
+```{r,fig.width = 5, fig.height = 3,include= FALSE}
+
+ggplot(df, aes(educ, wage, color = ne)) +
+geom_jitter(width = 0.2)
+ggplot(df, aes(educ, wage, color = mw)) +
+geom_jitter(width = 0.2)
+ggplot(df, aes(educ, wage, color = we)) +
+geom_jitter(width = 0.2)
+ggplot(df, aes(educ, wage, color = so)) +
+geom_jitter(width = 0.2)
+
+```
+
+
+
+```{r,fig.width = 7, fig.height = 4,echo = FALSE}
+df4 <- subset(df,ne == "Northeast")
+a <- ggplot(df4, aes(exper, wage, color = ne)) + geom_jitter(width = 0.2)
+
+df5 <- subset(df,mw == "Midwest")
+b <- ggplot(df5, aes(exper, wage, color = mw)) +
+geom_jitter(width = 0.2)
+
+df6 <- subset(df,we == "West")
+c <- ggplot(df6, aes(exper, wage, color = we)) +
+geom_jitter(width = 0.2)
+
+df7 <- subset(df,so == "South")
+d <- ggplot(df7, aes(exper, wage, color = so)) +
+geom_jitter(width = 0.2)
+plot_grid(a,b,c,d,ncol = 2)
+
+```
+
+It is noticeable from the graphs that people living in Northeast and South  tend to get more wage  with the same level of experience than their counterparts.
+
+
+# Takeaways 
+
+*There is a wage gap between the people of two race we are considering. 
+
+*There is sknewness and outliers present in the data that needs to be fixed.
+
+*Relationship between wages and living area of a person needs to be more explored.
+
+
+# QUESTION 2
+```{r}
+data <- data.frame(wafer)
+```
+
+```{r,include = FALSE}
+?wafer
+```
+
+```{r,include = FALSE}
+head(data)
+```
+
+```{r}
+c <- c("x1","x2","x3","x4","resist")
+model <- lm(resist ~ .,data)
+colnames(data) <- c
+summary(model)
+```
+
+# Part a)
+
+```{r}
+ x <- model.matrix(model)
+x
+```
+
+We can see that 0 and 1 has been used for low and high level setting for the factors. Different combination of these setting have given us 2^4 different settings to test the resistivity of the semiconductor wafer.
+
+# Part b)
+
+```{r}
+cor(x)
+```
+
+ Since the intercept column is constant , it results in zero standard deviation . This makes the calculation for correlation 'NA', since it is divided by SD of intercept.
+
+# Partc)
+
+The difference between resistance expected when moving from low to high level of x1 is beta1 = 25.76
+
+
+# Part d) 
+```{r}
+model1 <- lm(resist ~ x1+x2+x3,data)
+summary(model1)
+```
+
+Remained Same -
+
+*Estimated coefficients for x2,x3,x1
+
+*Their T value and P value
+
+Changed -
+
+*Coefficient for intercept term
+
+*Standard error of all the terms
+
+*F statistics and R Square
+
+*RSS
+
+*Residuals min max and median
+
+#Part e)
+
+Since we can see that correlation between the predictors are zero. Dropping x1 does not bring any change to the regression coefficients because the variables are independent with each other.
+
+
+# QUESTION 3)
+
+# Part a)
+```{r,echo = FALSE}
+library(faraway)
+head(teengamb)
+#?teengamb
+df1<-  data.frame(teengamb)
+model2 <- lm(gamble~sex+status+income+verbal,data=df1)
+summary(model2)
+```
+
+Estimated standard error - 22.69
+
+Interpretation - Standard error is the average distance of the our obverserved value of gambling from our fitted line calculated from sex,status,income and verbal variables.
+
+Part b)
+```{r}
+X <- cbind(c(rep(1,47)),df1$sex,df1$status,df1$income,df1$verbal)
+Y <- cbind(df1$gamble)
+b_hat <- solve(t(X)%*%X)%*%t(X)%*%Y
+y_fit <- X%*%b_hat
+residual_mat <- sum((Y-y_fit)^2)/(47-5)
+residual_mat
+xxt_inverse <- solve(t(X)%*%X)
+xxt_inverse
+var_cor <- residual_mat * xxt_inverse
+var_cor
+```

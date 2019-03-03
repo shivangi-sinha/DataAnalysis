@@ -1,0 +1,189 @@
+---
+title: "Relationship between Pace of Life and Heart Disease"
+author: "Shivangi Sinha"
+date: "2/24/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+**INTRODUCTION**
+
+In four regions of the US (Northeast, Midwest, South and West), the researchers chose three different  metropolitan cities, three medium sized cities, three smaller cities, and then measured the indicators of pace of life. The aim of the study was to understand the relationship between heart diseases and pace of life. They used following variables to measure pace of life:
+
+* **Walk** - The variable Walk is the walking speed of pedestrians over a distance of 60 feet during business hours on a clear summer day alog a main downtown street. 
+
+* **Bank** - It is the average time a sample of bank clerks take to make change of two $20 bills.
+
+* **Talk** - It is the recorded responses of postal clerks explaining the difference between regular,cerified, and insured mail and by diving the total number of syllables by the time of their responses.
+
+* **Heart** - The researchers also obtained the age adjusted death rates from ischemic heart disease for each city.
+
+The variables have been standardized so there are no units of measurement involved. Below is the numerical summary and graphical summary of the data.
+
+```{r,include=FALSE}
+library(ggplot2)
+library(tidyverse)
+library(pander)
+library(gridExtra)
+library(faraway)
+library(Sleuth3)
+data <- data.frame(ex0914)
+```
+
+***Numerical Summary***
+
+```{r,echo=FALSE,warning=FALSE}
+s <- summary(data)
+df <- data.frame(rbind(c(26.36,21.42,20.75,19.81),c(13.00,12.00,10.00,11.00),c(334.00,30.00,30.00,31.00)))
+colnames(df) <- c("Bank","Walk","Talk","Heart")
+#pander(summary(df))
+rownames(df) <- c("Mean","Minimum","Maximum")
+pander(df)
+#pander(cor(X2,na.rm =  TRUE))
+```
+
+***Graphical Summary***
+
+```{r,fig.height= 2.5,fig.width=8,echo = FALSE}
+
+p1 <- ggplot(data = data)+ geom_point(aes(Bank,Heart))
+p2 = ggplot(data = data)+ geom_point(aes(Walk,Heart))
+p3 =ggplot(data = data)+ geom_point(aes(Talk,Heart))
+grid.arrange(p1, p2,p3, nrow = 1)
+```
+```{r,include=FALSE}
+mod1 <- lm(Heart~.,data=data)
+summary(mod1)
+```
+
+From graphical analysis, it seems like there is no relationship between heart disease and talking and a very mild linear relationships between heart disease and bank time and walking speed.
+
+```{r,include=FALSE}
+#All models fitted 
+mod1 <- lm(Heart~.,data=data)
+mod2 <- lm(Heart~Walk,data=data)
+mod3 <- lm(Heart~Talk,data=data)
+mod4 <- lm(Heart~Bank,data=data)
+mod5 <- lm(Heart~Walk+Talk,data=data)
+mod6 <- lm(Heart~Talk+Bank,data=data)
+mod7 <- lm(Heart~Walk+Bank,data=data)
+summary(mod1)
+summary(mod2)
+summary(mod3)
+summary(mod4)
+summary(mod5)
+summary(mod6)
+summary(mod7)
+
+```
+
+**METHODS**
+
+Using "Heart" variable as the response and rest of the variables are predictors,we tried to fit all the possible linear regression equation and chose the one with the highest adjusted $R^2$.
+
+The linear equation fitted on the data is 
+$$ Y_{i} = \beta_{0} + \beta_{1}X_{(Walk)i} + \beta_{2}X_{(Talk)i}+ \beta_{1}X_{(Bank)i}+\epsilon_{i},
+i=0,1...36 $$
+
+* $Y_{i}$ is the observed value of age adjusted death rates.
+* $X_{i}$'s are the explanatory variables corresponding to walking speed, postal * clerk talking speed and bank clerk speed vrespectively.
+* $\beta$'s are the  parameters that are to be estimated.
+* $\epsilon_{i}$ is the error terms
+
+Using this model we will be a conducting F test to check if pace of life indicators are related to the response that is the heart disease death rate.
+To check if the all of the explanatory variables are related with the death rate we will be using following F test
+
+$H_0=\beta_1=\beta_2=\beta_3=0$ vs $H_{A}$=At least one of them is not zero
+
+$$ F = \frac{MSR}{MSE}\sim F(p-1,n-p) $$
+n is the number of observations which is 36 in our case and p is the number of $\beta$'s which is 4.
+* MSR is the mean regression sum of squares 
+* MSE is the mean square error
+
+In order to test for each individial explanatory variable we will be using F-test for reduced model.
+Null Hypothesis
+Let $\Omega$ denote a larger model of interest with $p$ parameters
+and $\omega$ a smaller model that represents some simplification of $\Omega$ with $q$ parameters.
+Null hypothesis: the simplification to $\Omega$ implied by the simpler model, $\omega$
+
+F statistic 
+$$F = \frac{(RSS_{\omega} - RSS_{\Omega})/(p - q)}{RSS_{\Omega}/(n - p)}\sim F(p-q,n-p)$$
+
+***Assumptions for Inference***
+
+*  We are assuming that heart disease rate is linearly related to Walking speed,Bank clerk speed and Postal clerk talking speed.
+
+*  All the observations are independent to each other.
+
+*  The error term follows normal distribution with mean 0 and constant variance $\sigma^2$
+
+**RESULTS**
+
+After fitting the above model, we derived the following estimates-
+```{r,echo=FALSE}
+pander(summary(mod1))
+```
+
+**F statistics and degree of freedom**
+
+```{r,echo=FALSE}
+pander(summary(mod1)$f)
+```
+
+Conducting a F test between these two models to check in $\beta$ associated with Talk is zero.
+$$ Model1Y_{i} = \beta_{0} + \beta_{1}X_{(Walk)i} + \beta_{2}X_{(Talk)i}+ \beta_{1}X_{(Bank)i}+\epsilon_{i},
+i=0,1...36 $$
+$$ Model2=Y_{i} = \beta_{0} + \beta_{1}X_{(Walk)i} + \beta_{2}X_{(Bank)i}+\epsilon_{i},
+i=0,1...36 $$
+
+```{r,echo=FALSE}
+pander(anova(mod1,mod7))
+```
+
+Since p value is > 0.05, we fail to reject the null hypothesis.
+
+```{r,include=FALSE}
+plot(fitted(mod1),residuals(mod1),main = "Residual Plot",xlab = "Fitted",ylab = "Residuals")
+abline(h=0)
+```
+```{r,include=FALSE}
+qqnorm(residuals(mod1),ylab = "Residuals",main = "Q-Q Plot")
+qqline(residuals(mod1))
+```
+
+**Odd observations**
+
+```{r,fig.height=3,fig.width=5,echo=FALSE}
+obs <- row.names(data)
+halfnorm(influence(mod1)$hat,labs = obs,ylab = "Leverage")
+```
+
+Obervation number 36 and 35 seem to have high leverage.
+
+```{r,include=FALSE}
+inf1 <- influence(mod1)
+sig <- summary(mod1)
+stud <- residuals(mod1)/(sig$sig*sqrt(1-inf1$hat))
+plot(1:length(stud),stud,ylim=c(-3,3),xlab = "Studentized Residuals",ylab="Observations",main = "Studentized Residual Plot")
+abline(h=-2)
+abline(h=2)
+text(1:length(stud),stud-0.3,obs,font = 1)
+```
+
+**CONCLUSIONS**
+
+* Estimates : 
+With one unit change in the speed of bank clerk,speed of talking of postal clerk and walking speed of pedestrian the change in the death rate is equal to 0.4052,-0.17960 and 0.4516 respectively. The adjusted R^2^ is 0.1509 which is low for a linear model. Thus, I think we should try to get a bigger sample to get more accurate results.
+
+* F-Statistic and Estimated Sigma :
+Sum of square residuals is equal to 4.805    and F statistic for overall regression is equal to 3.073 whose p-value is less than 0.05. Thus, we find convincing evidence that pace of life indicators are related to the heart
+disease.
+
+* Reduced Model for Regression :
+While conducting  F-test for model with all the explanatory variables and the model with only speed of walking and bank clerk, we find that the p-value is less than 0.05. Thus,there is convincing result that talking speed of postal clerk may or may not be associated with death rate.
+
+* Odd observation : 
+By ploting halfnormal plot,we see that observation number 35 and 36 have high lervage. Thus, the regression line with these values will tend to tend to move towards those points while the regression line without them will move away.
+

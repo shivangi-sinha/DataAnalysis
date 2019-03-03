@@ -1,7 +1,7 @@
 # DataAnalysis
 
-# Project 1 - Initial Data Analysis
-# Weekly wages of US male workers in 1988
+## Project 1 - Initial Data Analysis
+## Weekly wages of US male workers in 1988
 
 ## Description
 The uswages data frame has 2000 rows and 10 columns. Weekly Wages for US male workers sampled from the Current Population Survey in 1988
@@ -41,8 +41,8 @@ Years of experience
 
 This is an exploratory exercise using descriptive statistics and graphical summaries in order to highlight important features of the data.
 
-# Project 2 - Multiple Linear Regression 
-# Relationship between pace of life and heart disease.
+## Project 2 - Multiple Linear Regression 
+## Relationship between pace of life and heart disease.
 
 ## Question of Interest - Is pace of life related to heart diseases?
 

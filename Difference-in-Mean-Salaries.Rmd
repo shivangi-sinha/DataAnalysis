@@ -1,0 +1,210 @@
+---
+title: "Studying Difference in Salaries of Males and Females"
+author: "Shivangi Sinha"
+date: "24th March 2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**INTRODUCTION**
+
+The  National Longitudinal Study of Youth data,  has data on annual incomes,intelligence test scores and years of education for males and females. Using a subset of this data containing 2584 observations, we will be answering our **Question of Interest - Is there any evidence that the mean salary for males exceeds the mean salary for females with the same years of education and AFQT scores? And by how much?**
+
+**Subject** - The subject identification number
+
+**Gender** - The gender of the subject - males or females who were between the ages of 14 and 22
+
+**AFQT** - This is the percentile score on the AFQT intelligence test measured in 1981
+
+**Educ** - Years of education completed by 2006
+
+```{r,include=FALSE}
+library(Sleuth3)
+library(ggplot2)
+library(tidyverse)
+library(pander)
+library(gridExtra)
+library(faraway)
+library(broom)
+library(MASS)
+dat <-data.frame(ex0923)
+```
+
+***Numerical Summary***
+
+The number of observation in our sample is 2584. The variable "Gender" is a categorical variables while "AFQT","Educ" and "Income2005" are the quantitative variables. 
+```{r,include=FALSE}
+par(mfrow=c(1,2))
+#mod.2 <- lm()
+dat1 <- dat[,c(3,4,5)]
+pander(cor((dat1)),)
+```
+Below is the numerical summary of explanatory variables.
+
+```{r,echo=FALSE}
+#summary(dat)
+df <- data.frame(rbind(c(54.44,13.89,49417),c(0,6.00,63),c(100,20,703637)))
+colnames(df) <- c("AFQT scores","Years of Education","Income")
+rownames(df) <- c("Mean","Minimum","Maximum")
+pander(df)
+```
+
+***Graphical Summary***
+
+```{r,echo=FALSE,fig.height=2.5}
+p1 <- ggplot(dat,aes(AFQT,Income2005))+ geom_point(aes(color=Gender),stat = "identity")+xlab("Scores") + ylab("Income per year ")
+p2 = ggplot(dat,aes(Educ,Income2005))+ geom_jitter(aes(color=Gender))+ylab("Income per year ")+xlab("Years of Education")
+p3 =ggplot(data = dat,aes(Gender,Income2005))+ geom_boxplot() +coord_flip()+ylab("Income per year ")+xlab("Gender")
+#p1
+#p2
+#p3
+#ggplot(dat, aes(Educ,fill=Gender)) +
+  #geom_histogram(binwidth = 500)
+
+p4 = ggplot(dat)+geom_histogram(mapping=aes(x = Income2005,y=..density..,color = Gender),bins=50)+
+  xlab("Income per year")
+  
+#ggplot(dat,aes(AFQT)) + geom_bar(width = 1)
+grid.arrange(p3,p4, nrow = 1,ncol=2)
+```
+
+From the box plot, we can see that median salary for male is higher than that of female. On an average, male earns more salary than female. From the histogram we can infer that income distribution is right skewed.
+
+**METHODS**
+
+***Assumptions for Inference***
+
+*  We are assuming that salary is linearly related to years of education,gender and intelligence score.
+
+*  All the observations are independent to each other.
+
+*  The error term follows normal distribution with mean 0 and constant variance $\sigma^2$
+
+In order to answer our question of interest, we will be fitting a regression model with income as response and the variables will be education and intelligence score. Apart from those coninuous variable, we will be using an indicator variable for the gender as our explanatory variable. This variable will take value 1 if the observed salary belongs to male and zero if it belongs to female. In order to for our assumption to be maintained and we are fitting a transformed value of Income. The transformation fucntion is log Here is the model to be fitted :
+
+$$\log{Y_{(Income)i}} = \beta_{0} + \beta_{1}1({X_{i}=Male}) + \beta_{2}X_{(AFQT)i}+ \beta_{1}X_{(Educ)i}+\epsilon_{i},
+i=0,1...2584$$ 
+
+The fitted values will be calculated using this formula :
+
+$$\hat{y}_{i(Income)}=\exp{\hat{\beta}_0}\exp{(\hat{\beta}1_{i(X=Male)})}exp{(\hat{\beta}X_{i(AFQT)})}exp{(\hat{\beta}X_{i(Educ)})}$$
+* $Y_{i}$ is the Income but the model fitted is using transformed value of Income.
+
+* $X_{i}$'s are the explanatory variables corresponding to AFQT scores, years of education and the indicator variable(Taking value of 1 when response is male) 
+
+* $\beta$'s are the  parameters that are to be estimated.
+
+* $\epsilon_{i}$ is the error terms
+
+Using this model we will be a conducting F test to check if there is any effect of gender on the income using the reduced model.
+Null hypothesis: $\beta_{1}$ = 0
+Alternative hypothesis : $\beta_{1} \ne$ 0
+F statistic 
+$$F = \frac{(RSS_{(\beta_{1}=0)}-RSS_{fullmodel})/(4-3)}{RSS_{fullmodel}/(2584-4)}\sim F(4-3,2584-4)$$
+
+* $RSS_{(\beta_{1}=0)}$ is the residual sum of square of the smaller model when $\beta_{1} = 0$
+
+* $RSS_{fullmodel}$ is the residual sum of square of the full model when $\beta_{1} \ne 0$ 
+
+This test should give us the evidence if there is difference  between the mean salary when gender is male and female. 
+In order to find how much this difference is we will be using confidence interval of $\beta_{1}$ which is as follows :
+$$e^{\hat{\beta}_{1} \pm t_{(1-\alpha/2)}\times\sqrt{Var(\hat{\beta}_{1})}}$$
+
+**RESULTS**
+
+After fitting the above model, we derived the following estimates after backtransforming-
+```{r,echo=FALSE}
+dat$indicator <- ifelse(dat$Gender == "male",1,0)   
+mod.3 <- lm(log(Income2005) ~ indicator + AFQT + Educ, data = dat)
+#summary(mod.3)
+mod.1 <- lm(Income2005 ~ indicator + AFQT + Educ, data = dat)
+mod.2 <- lm(log(Income2005) ~ AFQT + Educ, data = dat)
+#pander(summary(mod.3))
+
+est <-  data.frame(cbind(c("Intercept","Indicator Variable of Gender","AFQT","Education Years"),c(exp(8.731),exp(0.6245),exp(0.005914),exp(0.07695)),c(0.1026,0.03417,0.0007657,0.008489)))
+colnames(est) <- c("   ","Estimates","Standard Error")
+est[,2] <- round(as.numeric(levels(est[,2]))[est[,2]],3)
+est[,3] <- round(as.numeric(levels(est[,3]))[est[,3]],3)
+pander(est)
+res <- data.frame(rbind(c("Residual Standard Error","R-Square","Adjusted R-Square"),c(0.8661,0.2101, 0.2092)))
+
+colnames(res) <- c(" "," "," ")
+pander(res)
+pander(round(summary(mod.3)$f,3))
+```
+
+Conducting a F test between these two models to check in $\beta$ associated with Gender is zero.
+
+$$Model1:~~\log_{Y_{(Income)i}} = \beta_{0} + \beta_{1}1_{(X=Male)i} + \beta_{2}X_{(AFQT)i}+ \beta_{1}X_{(Educ)i}+\epsilon_{i},
+i=0,1...2579$$
+$$Model2:~~\log_{Y_{(Income)i}} = \beta_{0}  + \beta_{1}X_{(AFQT)i}+ \beta_{2}X_{(Educ)i}+\epsilon_{i},
+i=0,1...2579$$
+
+
+```{r,echo=FALSE}
+pander(anova(mod.3,mod.2))
+```
+
+Since the p value is less than 0.05. We reject the null hypothesis of $\beta_{1}$ = 0
+
+The confidence interval of $\beta_{1}$ is as follows after back tranforming the exponential value is as follows:
+
+```{r,echo=FALSE}
+#pander(confint(mod.3,"indicator"))
+cf <- data.frame(cbind(c("Lower Bound","Upper Bound"),round(c(exp( 0.5575),exp(0.6915 )),3)))
+colnames(cf) <- c("   "," Confidence Interval")
+pander(cf)
+```
+
+Checking for unusual values using half normal plot
+
+```{r,echo=FALSE,fig.width=7,fig.height=3}
+par(mfrow=c(1,2))
+subject_no <- row.names(dat)
+cooks <- cooks.distance(mod.3)
+halfnorm(cooks,1,labs = subject_no,ylab = "Cook's Distance")
+data <- dat[-c(1365,1245,436,2507,2518),]
+obs <- row.names(dat)
+halfnorm(influence(mod.1)$hat,labs = obs,ylab = "Leverage")
+```
+
+Accoring to this observations pertaining to subject number 11972 and 11937 have high leverage and observations with subject number 1046 and 2980 are influential points.
+
+Checking for Assumptions 
+
+```{r,echo=FALSE,fig.width=7,fig.height=2}
+g <- augment(mod.3, data = dat)
+a <- ggplot(g, aes(.fitted, .resid)) +
+  geom_hline(yintercept = 0, size = 2, color = "white") +
+  geom_point()+ ggtitle("Residual Plot") + xlab("Fitted Values") + ylab("Residuals")
+b <- ggplot(g, aes(sample = .resid)) +
+  geom_qq_line() +
+  geom_qq() + ggtitle("Q-Q Plot")
+grid.arrange(a,b, nrow = 1,ncol=2)
+#a
+#b
+```
+
+Accoring to the above residual plot, we the see that the variance is clustered around the zero and it is contant over the values . The Q-Q plot shows that the the transormed variable of income may only be approximately normal since the starting values fall through  but as the number of observations grows, it can be asymtotically normal due to Central Limit Theorum.
+
+```{r,include=FALSE}
+c <- boxcox(Income2005 ~ indicator + AFQT + Educ, data = dat,plotit = TRUE)
+```
+```{r,include=FALSE}
+(lambda <- c$x[which.max(c$y)])
+model <- lm(I((Income2005^lambda-1)/lambda) ~ indicator + AFQT + Educ, data = dat)
+```
+
+**CONCLUSIONS**
+
+* Estimates :
+Since there were problems with the assumptions of errors in the data,we used the tranformed model in order to answer the question of interest.Accoring to our regression model estimates, it is estimated that  in mean effect of gender with salaries of is 1.8(approx). Thus, we can say that we have the evidence that salary of males exceeds by females by salary multipied by 1.8. With 95 % confidence level, we can the say that this difference in salary lies between 1.7 and 1.9 with same level of intelligence scores and years of education.
+
+* Reduced Model for Regression :
+Our estimated f statistic is 333.9 which give a small p-value. Thus, we have confidencing evidence that there may be an associated between gender and salaries.
+
+* Rsquare :
+The adjusted R^2^ is 0.2092  which is low for a linear model. Thus, I think we should try to get a bigger sample to get more accurate results.
